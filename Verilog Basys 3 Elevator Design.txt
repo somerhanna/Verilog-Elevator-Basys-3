@@ -1,0 +1,377 @@
+module Elevator(input clock_100Mhz, input SOSBtn, btn1, Up, Down, input [8:0] Switches,
+output reg [3:0] Anode_Activate, output reg [6:0] LED_out, output reg [15:0] led);
+reg [26:0] one_second_counter;
+wire one_second_enable;
+reg [15:0] displayed_number;
+reg [3:0] LED_BCD;
+reg [19:0] refresh_counter;
+wire [1:0] LED_activating_counter;
+reg [3:0] Flashing;
+reg [25:0] counter_reg = 0;
+reg clk_out_reg = 0;
+//Faster Clock
+always @(posedge clock_100Mhz)begin
+if(counter_reg == 30_999_999)begin
+counter_reg <= 0;
+clk_out_reg <= ~clk_out_reg;
+end
+else
+counter_reg <= counter_reg +1;
+end
+//Number Counter, 1 Second Clock
+always @(posedge clock_100Mhz)
+begin
+if(one_second_counter>=99999999)
+one_second_counter <= 0;
+else
+one_second_counter <= one_second_counter + 1;
+end
+assign one_second_enable = (one_second_counter==99999999)?1:0;
+always @(posedge clock_100Mhz)
+begin
+if(one_second_enable==1)
+displayed_number <= displayed_number + 1;
+end
+always @(posedge clock_100Mhz)
+begin
+refresh_counter <= refresh_counter + 1;
+end
+assign LED_activating_counter = refresh_counter[19:18];
+always @(*)
+begin
+if (displayed_number % 2 == 0 && Down)
+Flashing <= 12;
+else if (displayed_number % 2 == 0)
+Flashing <= 10;
+if (displayed_number % 2 == 1 && Down)
+Flashing <= 13;
+else if (displayed_number % 2 == 1)
+Flashing <=11;
+end
+//Panic Button
+always @(*)begin
+if(clk_out_reg && SOSBtn)
+led[15:9] <= {16{SOSBtn}};
+else
+led[15:9] <= 0;
+end
+always @(*)
+begin
+case(LED_activating_counter)
+2'b00: begin
+Anode_Activate = 4'b0111;
+LED_BCD = 15;
+if(btn1)
+LED_BCD <= 14;
+end
+2'b01: begin
+Anode_Activate = 4'b1011;
+LED_BCD = 14;
+if(btn1)
+LED_BCD <= 15;
+end
+2'b10: begin
+Anode_Activate = 4'b1101;
+LED_BCD = Flashing;
+end
+2'b11: begin
+Anode_Activate = 4'b1110;
+case(Switches)
+9'b000000001: begin
+LED_BCD = 1;
+led[8:0] <= 9'b000000001;
+end
+9'b000000010: begin
+LED_BCD = 2;
+led[8:0] <= 9'b000000010;
+end
+9'b000000100: begin
+LED_BCD = 3;
+if(displayed_number % 10 == 0 && Up == 0)
+led[8:0] <= 9'b000000001;
+if(displayed_number % 10 == 1 && Up == 0)
+led[8:0] <= 9'b000000010;
+if(displayed_number % 10 == 2 && Up == 0)
+led[8:0] <= 9'b000000100;
+if(displayed_number % 10 == 3 && Up == 0)
+led[8:0] <= 9'b000000001;
+if(displayed_number % 10 == 4 && Up == 0)
+led[8:0] <= 9'b000000001;
+if(displayed_number % 10 == 5 && Up == 0)
+led[8:0] <= 9'b000000001;
+if(displayed_number % 10 == 6 && Up == 0)
+led[8:0] <= 9'b000000001;
+if(displayed_number % 10 == 7 && Up == 0)
+led[8:0] <= 9'b000000001;
+if(displayed_number % 10 == 8 && Up == 0)
+led[8:0] <= 9'b000000001;
+else if(Up)
+led[8:0] <= 9'b000000100;
+end
+9'b000001000: begin
+LED_BCD = 4;
+if(displayed_number % 10 == 0 && Up == 0)
+led[8:0] <= 9'b000000001;
+if(displayed_number % 10 == 1 && Up == 0)
+led[8:0] <= 9'b000000010;
+if(displayed_number % 10 == 2 && Up == 0)
+led[8:0] <= 9'b000000100;
+if(displayed_number % 10 == 3 && Up == 0)
+led[8:0] <= 9'b000001000;
+if(displayed_number % 10 == 4 && Up == 0)
+led[8:0] <= 9'b000000001;
+if(displayed_number % 10 == 5 && Up == 0)
+led[8:0] <= 9'b000000001;
+if(displayed_number % 10 == 6 && Up == 0)
+led[8:0] <= 9'b000000001;
+if(displayed_number % 10 == 7 && Up == 0)
+led[8:0] <= 9'b000000001;
+if(displayed_number % 10 == 8 && Up == 0)
+led[8:0] <= 9'b000000001;
+else if(Up)
+led[8:0] <= 9'b000001000;
+end
+9'b000010000: begin
+LED_BCD = 5;
+if(displayed_number % 10 == 0 && Up == 0)
+led[8:0] <= 9'b000000001;
+if(displayed_number % 10 == 1 && Up == 0)
+led[8:0] <= 9'b000000010;
+if(displayed_number % 10 == 2 && Up == 0)
+led[8:0] <= 9'b000000100;
+if(displayed_number % 10 == 3 && Up == 0)
+led[8:0] <= 9'b000001000;
+if(displayed_number % 10 == 4 && Up == 0)
+led[8:0] <= 9'b000010000;
+if(displayed_number % 10 == 5 && Up == 0)
+led[8:0] <= 9'b000000001;
+if(displayed_number % 10 == 6 && Up == 0)
+led[8:0] <= 9'b000000001;
+if(displayed_number % 10 == 7 && Up == 0)
+led[8:0] <= 9'b000000001;
+if(displayed_number % 10 == 8 && Up == 0)
+led[8:0] <= 9'b000000001;
+else if(Up)
+led[8:0] <= 9'b000010000;
+end
+9'b000100000: begin
+LED_BCD = 6;
+if(displayed_number % 10 == 0 && Up == 0)
+led[8:0] <= 9'b000000001;
+if(displayed_number % 10 == 1 && Up == 0)
+led[8:0] <= 9'b000000010;
+if(displayed_number % 10 == 2 && Up == 0)
+led[8:0] <= 9'b000000100;
+if(displayed_number % 10 == 3 && Up == 0)
+led[8:0] <= 9'b000001000;
+if(displayed_number % 10 == 4 && Up == 0)
+led[8:0] <= 9'b000010000;
+if(displayed_number % 10 == 5 && Up == 0)
+led[8:0] <= 9'b000100000;
+if(displayed_number % 10 == 6 && Up == 0)
+led[8:0] <= 9'b000000001;
+if(displayed_number % 10 == 7 && Up == 0)
+led[8:0] <= 9'b000000001;
+if(displayed_number % 10 == 8 && Up == 0)
+led[8:0] <= 9'b000000001;
+else if(Up)
+led[8:0] <= 9'b000100000;
+end
+9'b001000000: begin
+LED_BCD = 7;
+if(displayed_number % 10 == 0 && Up == 0)
+led[8:0] <= 9'b000000001;
+if(displayed_number % 10 == 1 && Up == 0)
+led[8:0] <= 9'b000000010;
+if(displayed_number % 10 == 2 && Up == 0)
+led[8:0] <= 9'b000000100;
+if(displayed_number % 10 == 3 && Up == 0)
+led[8:0] <= 9'b000001000;
+if(displayed_number % 10 == 4 && Up == 0)
+led[8:0] <= 9'b000010000;
+if(displayed_number % 10 == 5 && Up == 0)
+led[8:0] <= 9'b000100000;
+if(displayed_number % 10 == 6 && Up == 0)
+led[8:0] <= 9'b001000000;
+if(displayed_number % 10 == 7 && Up == 0)
+led[8:0] <= 9'b000000001;
+if(displayed_number % 10 == 8 && Up == 0)
+led[8:0] <= 9'b000000001;
+else if (Up)
+led[8:0] <= 9'b001000000;
+end
+9'b010000000: begin
+LED_BCD = 8;
+if(displayed_number % 10 == 0 && Up == 0)
+led[8:0] <= 9'b000000001;
+if(displayed_number % 10 == 1 && Up == 0)
+led[8:0] <= 9'b000000010;
+if(displayed_number % 10 == 2 && Up == 0)
+led[8:0] <= 9'b000000100;
+if(displayed_number % 10 == 3 && Up == 0)
+led[8:0] <= 9'b000001000;
+if(displayed_number % 10 == 4 && Up == 0)
+led[8:0] <= 9'b000010000;
+if(displayed_number % 10 == 5 && Up == 0)
+led[8:0] <= 9'b000100000;
+if(displayed_number % 10 == 6 && Up == 0)
+led[8:0] <= 9'b001000000;
+if(displayed_number % 10 == 7 && Up == 0)
+led[8:0] <= 9'b010000000;
+if(displayed_number % 10 == 8 && Up == 0)
+led[8:0] <= 9'b000000001;
+else if (Up)
+led[8:0] <= 9'b010000000;
+end
+9'b100000000: begin
+LED_BCD = 9;
+if(displayed_number % 10 == 0 && Up == 0)
+led[8:0] <= 9'b000000001;
+if(displayed_number % 10 == 1 && Up == 0)
+led[8:0] <= 9'b000000010;
+if(displayed_number % 10 == 2 && Up == 0)
+led[8:0] <= 9'b000000100;
+if(displayed_number % 10 == 3 && Up == 0)
+led[8:0] <= 9'b000001000;
+if(displayed_number % 10 == 4 && Up == 0)
+led[8:0] <= 9'b000010000;
+if(displayed_number % 10 == 5 && Up == 0)
+led[8:0] <= 9'b000100000;
+if(displayed_number % 10 == 6 && Up == 0)
+led[8:0] <= 9'b001000000;
+if(displayed_number % 10 == 7 && Up == 0)
+led[8:0] <= 9'b010000000;
+if(displayed_number % 10 == 8 && Up == 0)
+led[8:0] <= 9'b100000000;
+else if (Up)
+led[8:0] <= 9'b100000000;
+end
+default: begin
+LED_BCD = 0;
+led[8:0] <= 9'b000000001;
+end
+endcase
+end
+endcase
+end
+always @(*)
+begin
+case(LED_BCD)
+4'b0000: LED_out = 7'b1111110; // "0"
+4'b0001: LED_out = 7'b1001111; // "1"
+4'b0010: LED_out = 7'b0010010; // "2"
+4'b0011: LED_out = 7'b0000110; // "3"
+4'b0100: LED_out = 7'b1001100; // "4"
+4'b0101: LED_out = 7'b0100100; // "5"
+4'b0110: LED_out = 7'b0100000; // "6"
+4'b0111: LED_out = 7'b0001111; // "7"
+4'b1000: LED_out = 7'b0000000; // "8"
+4'b1001: LED_out = 7'b0000100; // "9"
+4'b1010: LED_out = 7'b0011101; // "10" up arrow high
+4'b1011: LED_out = 7'b1101010; // "11" up arrow low
+4'b1100: LED_out = 7'b1011100; // "12" down arrow high
+4'b1101: LED_out = 7'b1100011; // "13" down arrow low
+4'b1110: LED_out = 7'b0110001; // "14" [ left
+4'b1111: LED_out = 7'b0000111; // "15" ] right
+default: LED_out = 7'b0000001; // "0"
+endcase
+end
+endmodule
+
+
+Constraint File:
+# Clock signal
+set_property PACKAGE_PIN W5 [get_ports clock_100Mhz]
+set_property IOSTANDARD LVCMOS33 [get_ports clock_100Mhz]
+#seven-segment LED display
+set_property PACKAGE_PIN W7 [get_ports {LED_out[6]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {LED_out[6]}]
+set_property PACKAGE_PIN W6 [get_ports {LED_out[5]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {LED_out[5]}]
+set_property PACKAGE_PIN U8 [get_ports {LED_out[4]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {LED_out[4]}]
+set_property PACKAGE_PIN V8 [get_ports {LED_out[3]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {LED_out[3]}]
+set_property PACKAGE_PIN U5 [get_ports {LED_out[2]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {LED_out[2]}]
+set_property PACKAGE_PIN V5 [get_ports {LED_out[1]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {LED_out[1]}]
+set_property PACKAGE_PIN U7 [get_ports {LED_out[0]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {LED_out[0]}]
+set_property PACKAGE_PIN U2 [get_ports {Anode_Activate[0]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {Anode_Activate[0]}]
+set_property PACKAGE_PIN U4 [get_ports {Anode_Activate[1]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {Anode_Activate[1]}]
+set_property PACKAGE_PIN V4 [get_ports {Anode_Activate[2]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {Anode_Activate[2]}]
+set_property PACKAGE_PIN W4 [get_ports {Anode_Activate[3]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {Anode_Activate[3]}]
+##Switches
+set_property PACKAGE_PIN V17 [get_ports {Switches[0]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {Switches[0]}]
+set_property PACKAGE_PIN V16 [get_ports {Switches[1]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {Switches[1]}]
+set_property PACKAGE_PIN W16 [get_ports {Switches[2]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {Switches[2]}]
+set_property PACKAGE_PIN W17 [get_ports {Switches[3]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {Switches[3]}]
+set_property PACKAGE_PIN W15 [get_ports {Switches[4]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {Switches[4]}]
+set_property PACKAGE_PIN V15 [get_ports {Switches[5]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {Switches[5]}]
+set_property PACKAGE_PIN W14 [get_ports {Switches[6]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {Switches[6]}]
+set_property PACKAGE_PIN W13 [get_ports {Switches[7]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {Switches[7]}]
+set_property PACKAGE_PIN V2 [get_ports {Switches[8]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {Switches[8]}]
+set_property PACKAGE_PIN T1 [get_ports {Up}]
+set_property IOSTANDARD LVCMOS33 [get_ports {Up}]
+set_property PACKAGE_PIN U1 [get_ports {Down}]
+set_property IOSTANDARD LVCMOS33 [get_ports {Down}]
+set_property PACKAGE_PIN R2 [get_ports {SOSBtn}]
+set_property IOSTANDARD LVCMOS33 [get_ports {SOSBtn}]
+##Buttons
+set_property PACKAGE_PIN U18 [get_ports btn1]
+set_property IOSTANDARD LVCMOS33 [get_ports btn1]
+#set_property PACKAGE_PIN T18 [get_ports hourup]
+#set_property IOSTANDARD LVCMOS33 [get_ports hourup]
+#set_property PACKAGE_PIN W19 [get_ports btn1]
+# set_property IOSTANDARD LVCMOS33 [get_ports btn1]
+#set_property PACKAGE_PIN T17 [get_ports btn2]
+#set_property IOSTANDARD LVCMOS33 [get_ports btn2]
+#set_property PACKAGE_PIN U17 [get_ports KBtn]
+# set_property IOSTANDARD LVCMOS33 [get_ports KBtn]
+# LEDs
+set_property PACKAGE_PIN U16 [get_ports {led[0]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led[0]}]
+set_property PACKAGE_PIN E19 [get_ports {led[1]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led[1]}]
+set_property PACKAGE_PIN U19 [get_ports {led[2]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led[2]}]
+set_property PACKAGE_PIN V19 [get_ports {led[3]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led[3]}]
+set_property PACKAGE_PIN W18 [get_ports {led[4]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led[4]}]
+set_property PACKAGE_PIN U15 [get_ports {led[5]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led[5]}]
+set_property PACKAGE_PIN U14 [get_ports {led[6]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led[6]}]
+set_property PACKAGE_PIN V14 [get_ports {led[7]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led[7]}]
+set_property PACKAGE_PIN V13 [get_ports {led[8]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led[8]}]
+set_property PACKAGE_PIN V3 [get_ports {led[9]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led[9]}]
+set_property PACKAGE_PIN W3 [get_ports {led[10]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led[10]}]
+set_property PACKAGE_PIN U3 [get_ports {led[11]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led[11]}]
+set_property PACKAGE_PIN P3 [get_ports {led[12]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led[12]}]
+set_property PACKAGE_PIN N3 [get_ports {led[13]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led[13]}]
+set_property PACKAGE_PIN P1 [get_ports {led[14]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led[14]}]
+set_property PACKAGE_PIN L1 [get_ports {led[15]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {led[15]}]
